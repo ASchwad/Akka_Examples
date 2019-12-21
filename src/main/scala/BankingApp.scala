@@ -13,6 +13,13 @@ case class Withdraw(amount : Int) extends Message
 case class DepositedEvent(amount : Int) extends RecoveryEvent
 case class WithdrawEvent(amount: Int) extends RecoveryEvent
 
+//https://doc.akka.io/docs/akka/2.3/scala/persistence.html
+//Event-Sourcing: State changes of an actor are kept in a journal. If the actor crashes, the journal entries can be
+// iterated to retrieve the current state.
+//Snapshots: some actors may be prone to accumulating extremely long event logs and experiencing long recovery times,
+// Snapshots can dramatically reduce recovery times of persistent actors and views
+// What exactly is a snapshot?
+
 class TransactionService extends PersistentActor{
 
   override def receive = receiveCommand
@@ -23,19 +30,25 @@ class TransactionService extends PersistentActor{
 
   val updateBalance : RecoveryEvent => Unit = {
     case DepositedEvent(amount) => {
-      println(s"Balance: $balance - $amount")
+      println(s"Balance: $balance + $amount")
       balance += amount
+      println(s"New Balance: $balance")
     }
-    case WithdrawEvent(amount) => balance -= amount
+    case WithdrawEvent(amount) =>
+      {
+        println(s"Balance: $balance - $amount")
+        balance -= amount
+        println(s"New Balance: $balance")
+        //saveSnapshot(amount)
+      }
   }
 
   override def receiveCommand: Receive =  {
     case Deposit(amount) => {
-      println("Test")
       persist(DepositedEvent(amount))(updateBalance)
     }
     case Withdraw(amount: Int) => {
-      println(s"Withdraw $amount from Bank account")
+      persist(WithdrawEvent(amount))(updateBalance)
     }
   }
 
@@ -49,8 +62,11 @@ object BankingApp extends App{
 
   val system = ActorSystem("banking-system");
 
+
   val transactionService = system.actorOf(Props[TransactionService], "transaction-service");
 
+
   transactionService ! Deposit(123)
+  transactionService ! Withdraw(50)
   //system.terminate()
 }
