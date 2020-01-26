@@ -1,4 +1,5 @@
 import scala.annotation.tailrec
+import scala.collection.mutable.ListBuffer
 
 val name = "Test"
 
@@ -41,3 +42,25 @@ def factorialTR(n: Int): Int={
 factorialStep(3, 1)
 
 factorialTR(5)
+
+
+def split[T](list:List[T], pf:T => Boolean) = {
+  var acc = 0
+  var badList = ListBuffer[T]()
+  var goodList = ListBuffer[T]()
+  @tailrec def splitInternal(): Unit ={
+    if(acc==list.length){
+      println("Done")
+    }else{
+      if(pf(list(acc))) goodList = goodList.append(list(acc))
+      else badList = badList.append(list(acc))
+      acc = acc + 1
+      splitInternal()
+    }
+  }
+
+  splitInternal()
+  (badList, goodList)
+}
+
+split(List(1,2,3), {e: Int => e%2 == 0})

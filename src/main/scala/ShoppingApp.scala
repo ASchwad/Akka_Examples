@@ -26,9 +26,11 @@ class ShoppingCartManager extends Actor{
 
   override def receive = {
     case CreateNewCart(a) => {
+
       println("[ShoppingCartManager] Creating Cart for user " + a.toString())
       val cart = context.actorOf(Props[ShoppingCart], "cart-"+a.toString());
       //context.actorOf[Props[ShoppingCart], "cart-123"]
+      //context.children.foreach( s => println(s.path))
       cart ! AddItem
       cart ! DoSomething
 

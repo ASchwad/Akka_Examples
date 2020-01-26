@@ -16,9 +16,9 @@ case class WithdrawEvent(amount: Int) extends RecoveryEvent
 //https://doc.akka.io/docs/akka/2.3/scala/persistence.html
 //Event-Sourcing: State changes of an actor are kept in a journal. If the actor crashes, the journal entries can be
 // iterated to retrieve the current state.
+
 //Snapshots: some actors may be prone to accumulating extremely long event logs and experiencing long recovery times,
 // Snapshots can dramatically reduce recovery times of persistent actors and views
-// What exactly is a snapshot?
 
 class TransactionService extends PersistentActor{
 
@@ -43,6 +43,9 @@ class TransactionService extends PersistentActor{
       }
   }
 
+  //Two kind of Receive commands: For commands during runtime and for recovery phase
+
+  //Commands during runtime call persist on Recovery Events before actually updating the state.
   override def receiveCommand: Receive =  {
     case Deposit(amount) => {
       persist(DepositedEvent(amount))(updateBalance)
@@ -53,8 +56,8 @@ class TransactionService extends PersistentActor{
   }
 
   override def receiveRecover: Receive = {
-    case message @ DepositedEvent(amount) => updateBalance(message)
-    case message @ WithdrawEvent(amount) => updateBalance(message)
+    case message : DepositedEvent => updateBalance(message)
+    case message : WithdrawEvent => updateBalance(message)
   }
 }
 
